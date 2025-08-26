@@ -1,0 +1,109 @@
+{
+  "personalInfo": {
+    "name": "Ramya N",
+    "title": "Full Stack Developer",
+    "email": "ramya.n@example.com",
+    "location": "Bangalore, India",
+    "profileImage": "/assets/profile.jpg"
+  },
+  "sections": {
+    "home": {
+      "messages": [
+        {
+          "id": 1,
+          "content": "👋 Hi there! Welcome to my portfolio!",
+          "timestamp": "9:00 AM"
+        },
+        {
+          "id": 2,
+          "content": "I'm a Full Stack Developer passionate about creating innovative web solutions.",
+          "timestamp": "9:01 AM"
+        },
+        {
+          "id": 3,
+          "content": "Feel free to explore my skills, projects, and experience through the navigation menu.",
+          "timestamp": "9:02 AM"
+        }
+      ]
+    },
+    "about": {
+      "messages": [
+        {
+          "id": 1,
+          "content": "I'm a Full Stack Developer with expertise in:",
+          "timestamp": "9:05 AM"
+        },
+        {
+          "id": 2,
+          "content": "• Frontend: React, TypeScript, TailwindCSS\n• Backend: Node.js, Express, MongoDB\n• Tools: Git, Docker, AWS",
+          "timestamp": "9:06 AM"
+        },
+        {
+          "id": 3,
+          "content": "With 3+ years of experience in developing web applications, I focus on creating scalable and maintainable solutions.",
+          "timestamp": "9:07 AM"
+        }
+      ]
+    },
+    "skills": {
+      "messages": [
+        {
+          "id": 1,
+          "content": "Technical Skills:",
+          "timestamp": "9:10 AM"
+        },
+        {
+          "id": 2,
+          "content": "Frontend Development:\n• React/Next.js (⭐⭐⭐⭐⭐)\n• TypeScript (⭐⭐⭐⭐)\n• HTML/CSS (⭐⭐⭐⭐⭐)",
+          "timestamp": "9:11 AM"
+        },
+        {
+          "id": 3,
+          "content": "Backend Development:\n• Node.js (⭐⭐⭐⭐)\n• Express (⭐⭐⭐⭐)\n• MongoDB (⭐⭐⭐⭐)",
+          "timestamp": "9:12 AM"
+        }
+      ]
+    },
+    "projects": {
+      "messages": [
+        {
+          "id": 1,
+          "content": "Here are some of my notable projects:",
+          "timestamp": "9:15 AM"
+        },
+        {
+          "id": 2,
+          "content": "🚀 E-commerce Platform\n• Built with MERN stack\n• Features: Authentication, Payment Integration, Admin Dashboard\n• GitHub: github.com/username/ecommerce",
+          "timestamp": "9:16 AM"
+        },
+        {
+          "id": 3,
+          "content": "📱 Social Media App\n• React Native + Firebase\n• Features: Real-time Chat, Post Sharing, User Profiles\n• GitHub: github.com/username/social-app",
+          "timestamp": "9:17 AM"
+        }
+      ]
+    }
+  },
+  "navigation": [
+    {
+      "id": "home",
+      "icon": "🏠",
+      "label": "Home"
+    },
+    {
+      "id": "about",
+      "icon": "👤",
+      "label": "About"
+    },
+    {
+      "id": "skills",
+      "icon": "💻",
+      "label": "Skills"
+    },
+    {
+      "id": "projects",
+      "icon": "🚀",
+      "label": "Projects"
+    }
+  ]
+}
