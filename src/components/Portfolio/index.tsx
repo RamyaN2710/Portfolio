@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowUpRight, Home, User2, Wrench, GraduationCap, FolderKanban, Mail } from "lucide-react";
 import { PortfolioTestIds } from "../__testids__/Portfolio.ids";
@@ -13,6 +13,179 @@ import {
 import SecondaryLogo from '../../Secondary Logo.png';
 function classNames(...a: string[]) {
   return a.filter(Boolean).join(" ");
+}
+
+const flipStyles = {
+  transformStyle: "preserve-3d" as const,
+  backfaceVisibility: "hidden" as const,
+  WebkitBackfaceVisibility: "hidden" as const,
+  MozBackfaceVisibility: "hidden" as const,
+};
+
+interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  points: number;
+  unlocked: boolean;
+}
+
+interface AchievementContextType {
+  achievements: Achievement[];
+  totalPoints: number;
+  unlockAchievement: (id: string) => void;
+}
+
+const ACHIEVEMENTS: Achievement[] = [
+  {
+    id: "explorer",
+    title: "Portfolio Explorer",
+    description: "Viewed all sections of the portfolio",
+    points: 100,
+    unlocked: false
+  },
+  {
+    id: "skill_master",
+    title: "Skill Master",
+    description: "Explored all skills in detail",
+    points: 50,
+    unlocked: false
+  },
+  {
+    id: "project_enthusiast",
+    title: "Project Enthusiast",
+    description: "Viewed all projects",
+    points: 75,
+    unlocked: false
+  },
+  {
+    id: "contact_initiator",
+    title: "Contact Initiator",
+    description: "Initiated contact through the form",
+    points: 25,
+    unlocked: false
+  }
+];
+
+const AchievementContext = createContext<AchievementContextType | null>(null);
+
+function useAchievements() {
+  const context = useContext(AchievementContext);
+  if (!context) {
+    throw new Error("useAchievements must be used within an AchievementProvider");
+  }
+  return context;
+}
+
+function AchievementNotification({ achievement }: Readonly<{ achievement: Achievement }>) {
+  return (
+    <motion.div
+      initial={{ x: 100, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      exit={{ x: 100, opacity: 0 }}
+      className="fixed bottom-20 right-4 z-50 bg-violet-600 text-white p-4 rounded-lg shadow-lg flex items-center gap-3"
+    >
+      <div className="h-10 w-10 rounded-full bg-violet-500/20 grid place-items-center">
+        <GraduationCap className="h-5 w-5" />
+      </div>
+      <div>
+        <h4 className="font-semibold">{achievement.title}</h4>
+        <p className="text-sm text-violet-200">{achievement.description}</p>
+        <p className="text-sm font-semibold text-violet-300">+{achievement.points} points</p>
+      </div>
+    </motion.div>
+  );
+}
+
+function AchievementProvider({ children }: Readonly<{ children: React.ReactNode }>) {
+  const [achievements, setAchievements] = useState<Achievement[]>(ACHIEVEMENTS);
+  const [recentAchievement, setRecentAchievement] = useState<Achievement | null>(null);
+  
+  const totalPoints = achievements.reduce((total, achievement) => 
+    total + (achievement.unlocked ? achievement.points : 0), 0
+  );
+
+  const unlockAchievement = React.useCallback((id: string) => {
+    setAchievements(prev => {
+      const newAchievements = prev.map(achievement => {
+        if (achievement.id === id && !achievement.unlocked) {
+          setRecentAchievement(achievement);
+          setTimeout(() => setRecentAchievement(null), 3000);
+          return { ...achievement, unlocked: true };
+        }
+        return achievement;
+      });
+      return newAchievements;
+    });
+  }, []);
+
+  const contextValue = React.useMemo(() => ({
+    achievements,
+    totalPoints,
+    unlockAchievement
+  }), [achievements, totalPoints, unlockAchievement]);
+
+  return (
+    <AchievementContext.Provider value={contextValue}>
+      {children}
+      <AnimatePresence mode="wait">
+        <React.Fragment key="achievement-wrapper">
+          {recentAchievement && <AchievementNotification achievement={recentAchievement} />}
+        </React.Fragment>
+      </AnimatePresence>
+    </AchievementContext.Provider>
+  );  
+}
+
+function ProgressBar() {
+  const [scrollDirection, setScrollDirection] = useState("none");
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const updateProgress = () => {
+      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const scrolled = window.scrollY;
+      const newProgress = scrolled / scrollHeight;
+      setProgress(newProgress);
+
+      // Update scroll direction
+      if (scrolled > lastScrollY) {
+        setScrollDirection("down");
+      } else if (scrolled < lastScrollY) {
+        setScrollDirection("up");
+      }
+      setLastScrollY(scrolled);
+    };
+
+    window.addEventListener('scroll', updateProgress);
+    updateProgress();
+    return () => window.removeEventListener('scroll', updateProgress);
+  }, [lastScrollY]);
+
+  return (
+    <motion.div
+      className="fixed top-0 left-0 right-0 h-1 origin-left z-50 overflow-hidden"
+      style={{ background: "rgba(124,58,237,0.2)" }}
+    >
+      <motion.div
+        className="h-full w-full bg-violet-500"
+        initial={{ scaleX: 0 }}
+        animate={{ 
+          scaleX: progress,
+          boxShadow: scrollDirection === "down" 
+            ? "0 0 10px rgba(124,58,237,0.5), 0 0 5px rgba(124,58,237,0.3)"
+            : "none"
+        }}
+        transition={{ 
+          type: "spring",
+          stiffness: 200,
+          damping: 30,
+          mass: 0.5
+        }}
+      />
+    </motion.div>
+  );
 }
 
 const focusable =
@@ -206,25 +379,88 @@ interface SkillCardProps {
   readonly skill: typeof SKILLS[0];
 }
 
-function SkillCard({ skill }: SkillCardProps) {
+function SkillCard({ skill }: Readonly<SkillCardProps>) {
+  const [isFlipped, setIsFlipped] = useState(false);
+  const { unlockAchievement } = useAchievements();
+  const [hasInteracted, setHasInteracted] = useState(false);
+
+  const handleInteraction = () => {
+    if (!hasInteracted) {
+      unlockAchievement("skill_master");
+      setHasInteracted(true);
+    }
+    setIsFlipped(!isFlipped);
+  };
+
   return (
-    <motion.div
-      initial={{ scale: 0.8, opacity: 0 }}
-      whileInView={{ scale: 1, opacity: 1 }}
-      viewport={{ once: true }}
+    <button
+      onClick={handleInteraction}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleInteraction();
+        }
+      }}
       className={classNames(
-        "group relative flex items-center gap-3 rounded-xl p-2.5",
+        "group relative w-full text-left rounded-xl p-4",
         theme.card,
         "ring-1 ring-slate-800 hover:ring-violet-500 transition-all",
-        "hover:-translate-y-0.5 hover:shadow-lg"
+        "hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
       )}
+      style={{ perspective: "1000px" }}
       data-testid={PortfolioTestIds.skills.skillCard}
+      aria-label={`${skill.label} skill card - click to see experience level`}
     >
-      <div className="grid place-items-center h-8 w-8 rounded-lg" style={{ backgroundColor: `${skill.color}20` }}>
-        <skill.icon className="h-5 w-5 group-hover:scale-110 transition-transform" style={{ color: skill.color }} />
-      </div>
-      <span className="text-sm font-medium text-slate-200">{skill.label}</span>
-    </motion.div>
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0 }}
+        whileInView={{ scale: 1, opacity: 1 }}
+        viewport={{ once: true }}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+      >
+      <motion.div
+        animate={{ rotateY: isFlipped ? 180 : 0 }}
+        transition={{ duration: 0.6, type: "spring" }}
+        style={{ ...flipStyles }}
+      >
+        <motion.div
+          className="flex items-center gap-3"
+          style={{ ...flipStyles }}
+          animate={{
+            opacity: isFlipped ? 0 : 1,
+            rotateY: isFlipped ? 180 : 0
+          }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="grid place-items-center h-10 w-10 rounded-lg" style={{ backgroundColor: `${skill.color}20` }}>
+            <skill.icon className="h-6 w-6 group-hover:scale-110 transition-transform" style={{ color: skill.color }} />
+          </div>
+          <span className="text-sm font-medium text-slate-200">{skill.label}</span>
+        </motion.div>
+
+        <motion.div
+          className="absolute inset-0 flex flex-col justify-center p-4 text-center"
+          style={{ ...flipStyles }}
+          animate={{
+            opacity: isFlipped ? 1 : 0,
+            rotateY: isFlipped ? 0 : -180
+          }}
+          transition={{ duration: 0.3 }}
+        >
+          <h4 className="text-sm font-semibold text-violet-400 mb-2">Experience Level</h4>
+          <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full bg-violet-500"
+              initial={{ width: 0 }}
+              animate={{ width: "75%" }}
+              transition={{ duration: 1, delay: 0.2 }}
+            />
+          </div>
+          <p className="mt-2 text-xs text-slate-300">Click to flip back</p>
+        </motion.div>
+      </motion.div>
+      </motion.div>
+    </button>
   );
 }
 
@@ -252,12 +488,39 @@ interface ProjectCardProps {
   readonly project: typeof PROJECTS[0];
 }
 
-function ProjectCard({ project }: ProjectCardProps) {
+function ProjectCard({ project }: Readonly<ProjectCardProps>) {
+  const [isUnlocked, setIsUnlocked] = useState(false);
+  const { unlockAchievement } = useAchievements();
+  const [hasInteracted, setHasInteracted] = useState(false);
+  const cardRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            if (!hasInteracted) {
+              unlockAchievement("project_enthusiast");
+              setHasInteracted(true);
+            }
+            setIsUnlocked(true);
+            observer.disconnect();
+          }
+        });
+      },
+      { threshold: 0.3 }
+    );
+
+    if (cardRef.current) {
+      observer.observe(cardRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [hasInteracted, unlockAchievement]);
+
   return (
-    <motion.article
-      initial={{ scale: 0.8, opacity: 0 }}
-      whileInView={{ scale: 1, opacity: 1 }}
-      viewport={{ once: true }}
+    <article
+      ref={cardRef}
       className={classNames(
         "group relative overflow-hidden rounded-2xl p-5",
         theme.card,
@@ -265,38 +528,75 @@ function ProjectCard({ project }: ProjectCardProps) {
       )}
       data-testid={PortfolioTestIds.projects.projectCard}
     >
-      <div className="flex items-start justify-between">
-        <h3 className="text-lg font-semibold text-slate-100">{project.title}</h3>
-      
-      </div>
-      <p className="mt-2 text-sm text-slate-300">{project.description}</p>
-      <div className="mt-3 flex flex-wrap gap-2">
-        {project.tags.map((t) => (
-          <span
-            key={t}
-            className="rounded-full bg-slate-800/70 px-2 py-0.5 text-xs text-slate-300 ring-1 ring-slate-700"
-          >
-            {t}
-          </span>
-        ))}
-      </div>
-
-
-      <a
-        href={project.link}
-        target="_blank"
-        rel="noreferrer noopener"
-        className={classNames(
-          "absolute bottom-4 right-4 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium",
-          "translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all",
-          "bg-violet-600/90 hover:bg-violet-500 text-white",
-          focusable
-        )}
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0 }}
+        whileInView={{ scale: 1, opacity: 1, transition: { duration: 0.5 } }}
+        viewport={{ once: true }}
+        className="h-full w-full"
       >
-        Visit <ArrowUpRight className="h-4 w-4" />
-      </a>
-    </motion.article>
+        <motion.div
+          initial={{ filter: "blur(10px)", opacity: 0.3 }}
+          animate={isUnlocked ? { filter: "blur(0px)", opacity: 1 } : {}}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+        >
+          <div className="flex items-start justify-between">
+            <h3 className="text-lg font-semibold text-slate-100">{project.title}</h3>
+          </div>
+          <p className="mt-2 text-sm text-slate-300">{project.description}</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {project.tags.map((t) => (
+              <motion.div
+                key={t}
+                initial={{ scale: 0, opacity: 0 }}
+                animate={isUnlocked ? { scale: 1, opacity: 1 } : {}}
+                transition={{ duration: 0.4, delay: Math.random() * 0.3 }}
+                className="inline-block rounded-full bg-slate-800/70 px-2 py-0.5 text-xs text-slate-300 ring-1 ring-slate-700"
+              >
+                {t}
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={isUnlocked ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.5, delay: 0.3 }}
+        >
+          <a
+            href={project.link}
+            target="_blank"
+            rel="noreferrer noopener"
+            className={classNames(
+              "absolute bottom-4 right-4 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium",
+              "translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all",
+              "bg-violet-600/90 hover:bg-violet-500 text-white",
+              focusable
+            )}
+          >
+            Visit <ArrowUpRight className="h-4 w-4" />
+          </a>
+        </motion.div>
+
+        {!isUnlocked && (
+          <motion.div
+            initial={{ opacity: 1 }}
+            animate={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="absolute inset-0 flex items-center justify-center bg-slate-900/80 backdrop-blur"
+          >
+            <motion.div
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              <span className="text-violet-400">Unlocking...</span>
+            </motion.div>
+          </motion.div>
+        )}
+      </motion.div>
+    </article>
   );
+ 
 }
 
 function Projects() {
@@ -389,11 +689,14 @@ function Timeline() {
 }
 
 function Contact() {
+  const { unlockAchievement } = useAchievements();
+  
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
     const data = Object.fromEntries(new FormData(form));
     alert("Thanks! Your message has been submitted.");
+    unlockAchievement("contact_initiator");
     form.reset();
     return data;
   }
@@ -526,16 +829,42 @@ function Contact() {
   );
 }
 
-export default function Portfolio() {
+
+export default function WrappedPortfolio() {
+  return (
+    <AchievementProvider>
+      <Portfolio />
+    </AchievementProvider>
+  );
+}
+
+function Portfolio() {
   const [active, setActive] = useState("home");
   const sectionsRef = useRef<Record<string, HTMLElement | null>>({});
   const ids = ["home", "about", "skills", "education", "projects", "contact"];
+
+  const { unlockAchievement } = useAchievements();
+  const viewedSections = useRef(new Set<string>());
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) setActive(entry.target.id);
+          if (entry.isIntersecting) {
+            setActive(entry.target.id);
+            viewedSections.current.add(entry.target.id);
+            
+            // Check for achievements
+            if (viewedSections.current.size === ids.length) {
+              unlockAchievement("explorer");
+            }
+            if (entry.target.id === "skills") {
+              unlockAchievement("skill_master");
+            }
+            if (entry.target.id === "projects") {
+              unlockAchievement("project_enthusiast");
+            }
+          }
         });
       },
       { root: null, rootMargin: "0px 0px -60% 0px", threshold: 0.2 }
@@ -551,68 +880,106 @@ export default function Portfolio() {
   }, []);
 
   return (
-    <div
-      className={classNames(
-        theme.bg,
-        theme.text,
-        "min-h-screen font-sans antialiased scroll-smooth"
-      )}
-      style={{
-        backgroundImage:
-          "radial-gradient(circle at 10% 10%, rgba(124,58,237,0.06) 0, transparent 40%), radial-gradient(circle at 90% 80%, rgba(124,58,237,0.06) 0, transparent 40%)",
-      }}
-      data-testid={PortfolioTestIds.container}
-    >
-      <a
-        href="#home"
-        className="sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[999] focus:bg-violet-600 focus:px-3 focus:py-1 focus:text-white focus:rounded"
+    <AchievementProvider>
+      <div
+        className={classNames(
+          theme.bg,
+          theme.text,
+          "min-h-screen font-sans antialiased scroll-smooth"
+        )}
+        style={{
+          backgroundImage:
+            "radial-gradient(circle at 10% 10%, rgba(124,58,237,0.08) 0, transparent 40%), radial-gradient(circle at 90% 80%, rgba(124,58,237,0.08) 0, transparent 40%), radial-gradient(circle at 50% 50%, rgba(124,58,237,0.06) 0, transparent 60%)",
+          position: "relative",
+          overflow: "hidden"
+        }}
+        data-testid={PortfolioTestIds.container}
       >
-        Skip to content
-      </a>
+        <ProgressBar />
+        
+        <a
+          href="#home"
+          className="sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[999] focus:bg-violet-600 focus:px-3 focus:py-1 focus:text-white focus:rounded"
+        >
+          Skip to content
+        </a>
 
-      <header className="sticky top-0 z-30 backdrop-blur supports-[backdrop-filter]:bg-slate-950/60 bg-slate-950/80 ring-1 ring-slate-800">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
-          <a
-            href="#home"
-            className="text-sm font-semibold text-slate-200 hover:text-violet-400"
+        <motion.div 
+          className="sticky top-0 z-30 backdrop-blur supports-[backdrop-filter]:bg-slate-950/60 bg-slate-950/80"
+          initial={{ y: -100 }}
+          animate={{ y: 0 }}
+          transition={{ type: "spring", stiffness: 200, damping: 20 }}
+        >
+          <motion.div 
+            className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3 relative"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
           >
-            <img
-              src={SecondaryLogo}
-              alt="Portfolio Logo"
-              className="h-10 w-auto" // Adjust these values based on your needs
-            />
-          </a>
-          <nav aria-label="Primary" className="hidden gap-6 md:flex">
-            {ids.map((id) => (
-              <a
-                key={id}
-                href={`#${id}`}
-                className={classNames(
-                  "text-sm text-slate-300 hover:text-white transition-colors",
-                  active === id ? "text-violet-400" : ""
-                )}
+            <div
+              onClick={() => window.location.href = '#home'}
+              className="text-sm font-semibold text-slate-200 hover:text-violet-400 relative cursor-pointer transform hover:scale-105 active:scale-95 transition-transform"
+            >
+              <motion.div
+                className="h-10 w-auto"
+                whileHover={{ rotate: [0, -10, 10, 0] }}
+                transition={{ duration: 0.5 }}
               >
-                {id.charAt(0).toUpperCase() + id.slice(1)}
-              </a>
-            ))}
-          </nav>
-        </div>
-      </header>
+                <img
+                  src={SecondaryLogo}
+                  alt="Portfolio Logo"
+                  className="h-full w-auto"
+                />
+              </motion.div>
+            </div>
+            <nav aria-label="Primary" className="hidden gap-6 md:flex">
+              {ids.map((id, index) => (
+                <div
+                  key={id}
+                  onClick={() => window.location.href = `#${id}`}
+                  className={classNames(
+                    "text-sm text-slate-300 hover:text-white relative cursor-pointer transform hover:-translate-y-0.5 transition-transform",
+                    active === id ? "text-violet-400" : ""
+                  )}
+                >
+                  <span className="relative">
+                    {id.charAt(0).toUpperCase() + id.slice(1)}
+                    {active === id && (
+                      <motion.div
+                        className="absolute -bottom-1 left-0 right-0 h-0.5 bg-violet-400"
+                        animate={{ scaleX: 1 }}
+                        initial={{ scaleX: 0 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                      />
+                    )}
+                  </span>
+                </div>
+              ))}
+            </nav>
+          </motion.div>
+          <motion.div 
+            className="absolute bottom-0 left-0 right-0 h-px bg-slate-800"
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ delay: 0.5 }}
+          />
+        </motion.div>
 
-      <FloatingNav active={active} />
+        <FloatingNav active={active} />
 
-      <main>
-        <Hero />
-        <About />
-        <Skills />
-        <Timeline />
-        <Projects />
-        <Contact />
-      </main>
+        <main>
+          <Hero />
+          <About />
+          <Skills />
+          <Timeline />
+          <Projects />
+          <Contact />
+        </main>
 
-      <footer className="py-10 text-center text-sm text-slate-500">
-        © {new Date().getFullYear()} {PERSON.name}. All rights reserved.
-      </footer>
-    </div>
+        <footer className="py-10 text-center text-sm text-slate-500">
+          © {new Date().getFullYear()} {PERSON.name}. All rights reserved.
+        </footer>
+      </div>
+    </AchievementProvider>
   );
 }
