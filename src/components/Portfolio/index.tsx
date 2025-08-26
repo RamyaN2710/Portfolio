@@ -10,7 +10,7 @@ import {
   TIMELINE,
   HERO_TITLES,
 } from "../../data/portfolioData";
-
+import SecondaryLogo from '../../Secondary Logo.png';
 function classNames(...a: string[]) {
   return a.filter(Boolean).join(" ");
 }
@@ -308,7 +308,7 @@ function Projects() {
       data-testid={PortfolioTestIds.projects.container}
     >
       <div className="mx-auto max-w-6xl px-6">
-        <h2 className="text-3xl font-bold text-slate-100">Projects</h2>
+        <h2 className="text-3xl font-bold text-slate-100">Projects and Creations</h2>
         <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {PROJECTS.map((project) => (
             <ProjectCard key={project.title} project={project} />
@@ -576,7 +576,11 @@ export default function Portfolio() {
             href="#home"
             className="text-sm font-semibold text-slate-200 hover:text-violet-400"
           >
-            {PERSON.name}
+            <img
+              src={SecondaryLogo}
+              alt="Portfolio Logo"
+              className="h-10 w-auto" // Adjust these values based on your needs
+            />
           </a>
           <nav aria-label="Primary" className="hidden gap-6 md:flex">
             {ids.map((id) => (

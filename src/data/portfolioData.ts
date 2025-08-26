@@ -33,7 +33,7 @@ export const PERSON = {
   name: "Ramya",
   tagline: "I build delightful web experiences.",
   location: "India",
-  email: "ramyaanbu@gmail.com",
+  email: "ramyaanbu2002@gmail.com",
   achievements: [ 
     {
       id: "fullstack-master",
@@ -160,7 +160,7 @@ export const TIMELINE = [
       "Reduced deployment time by 60%",
       "Implemented JWT authentication",
     ],
-    skillsGained: ["Next.js", "NestJS", "PostgreSQL","Python","React"],
+    skillsGained: ["Reactjs", "Next.js", "NestJS", "PostgreSQL","Python","React Native"],
   },
   {
     type: "experience",
@@ -173,6 +173,17 @@ export const TIMELINE = [
       "Designed and managed relational databases with MySQL, including schema creation and query optimization",
     ],
     skillsGained: ["React", "Java", "MySQL","SpringBoot","Manual Testing"],
+  },
+  {
+    type: "education",
+    title: "Diplomo in Digital Marketing",
+    date: "2022",
+    desc: "Completed my Diploma in Digital Marketing with a focus on digital marketing and social media marketing.",
+    achievements: [
+    "Completed an internship on Digital Marketing",
+    "Digital Marketing projects create a small business page on social media platforms",
+    ],
+    skillsGained: ["Marketing", "SEO", "SEM", "SMM", "Content Marketing", "Social Media Marketing", "Email Marketing","Design tools"],
   },
   {
     type: "education",
